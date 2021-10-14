@@ -18,46 +18,83 @@
       <div class="p-2 mb-3" style="width: 50%; max-width: 300px">
         <textarea class="form-control" id="namelist" name="namelist" rows="10" placeholder="One name per line"></textarea>
       </div>
-      <button type="button mb-3" class="p-2 btn btn-primary" onclick="shuffleList()">Shuffle</button>
-      <div class="p-2 mb-3 d-flex flex-column align-items-center" style="width: 50%; max-width: 300px" id="output">
-        <!-- <div class="p-2">Tom</div>
-        <div class="w-100"></div>
-        <div class="p-2">Merle</div> -->
+      <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="showall" onclick="checkboxOnClick()">
+        <label class="form-check-label" for="showall">Show the whole name list</label>
       </div>
-      <button type="button" class="p-2 btn btn-primary" onclick="next()">Next</button>
+      <div class="d-flex justify-content-around align-items-center" style="width: 50%;">
+        <button type="button" class="p-2 btn btn-primary" onclick="shuffleOnClick()">Shuffle</button>
+        <button type="button" class="p-2 btn btn-primary" onclick="nextOnClick()">Next</button>
+      </div>
+      <div class="p-2 mb-3 d-flex flex-column align-items-center" style="width: 50%; max-width: 300px" id="output"></div>
     </div>
 
     <script>
-      function shuffleList() {
-          var namelist = readList("namelist");
-          namelist = shuffle(namelist);
-          namelist.unshift("-----")
-          var output = document.getElementById("output");
-          output.innerHTML = "";
-          namelist.forEach(name => output.appendChild(entry(name)));
-      }
-      
-      function next() {
-          var output = document.getElementById("output");
-          var split = document.getElementById("-----");
-          var index = Array.prototype.indexOf.call(output.children, split);
-          if (index >= output.children.length - 1) {
-            return;
-          } else if (index == output.children.length - 2) {
-            output.removeChild(split);
-            output.appendChild(split);
-          } else {
-            output.removeChild(split);
-            output.insertBefore(split, output.children[index + 1]);
+      class NameList {
+        constructor() {
+          this.namelist = [];
+          this.i = 0;
+        }
+
+        shuffle() {
+          this.namelist = readList("namelist");
+          this.namelist = shuffle(this.namelist);
+          this.i = 0;
+        }
+
+        next() {
+          if (this.i >= this.namelist.length) {
+            return
           }
-      }
-      
-      function entry(name) {
+          this.i++;
+        }
+
+        entries() {
+          var result = this.namelist.map(name => this.entry(name));
+          result.splice(this.i, 0, this.splitter());
+          if (document.getElementById("showall").checked) {
+            return result;
+          }
+          return result.slice(0, this.i+1);
+        }
+
+        entry(name) {
           var entry = document.createElement('div');
           entry.classList.add("p-2");
           entry.id = name;
           entry.innerHTML = name;
           return entry;
+        }
+
+        splitter() {
+          var entry = document.createElement('div');
+          entry.classList.add("p-2");
+          entry.id = "splitter";
+          entry.innerHTML = "-----";
+          return entry;
+        }
+
+        update() {
+          var output = document.getElementById("output");
+          output.innerHTML = "";
+          this.entries().forEach(entry => output.appendChild(entry));
+        }
+      }
+
+      let namelist = new NameList();
+
+      function shuffleOnClick() {
+        namelist.shuffle();
+        namelist.update();
+      }
+
+      function nextOnClick() {
+        namelist.next();
+        namelist.update();
+      }
+      
+      function checkboxOnClick() {
+        namelist.update();
       }
 
       function readList(id) {
